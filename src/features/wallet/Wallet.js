@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Slider from 'rc-slider';
-import { selectWallet, connectMetamask, connectBinance } from './walletSlice';
+import { selectWallet, connectMetamask, connectBinance, joinAuction } from './walletSlice';
 import ConnectWalletButton from './ConnectWalletButton';
 import 'rc-slider/assets/index.css';
 
@@ -27,14 +27,22 @@ export const Wallet = (props) => {
 
       <p>
         <label htmlFor="bidAmount">Bid price:</label>
-        <input type="number" id="bidAmount" value={bidAmount} onChange={(value) => setBidAmount(value)} />
+        <input type="number" id="bidAmount" value={bidAmount}
+          onChange={(e) => {
+            let value = parseInt(e.target.value);
+            if (value < 0.1) {
+              value = 0.1
+            }
+            setBidAmount(value)
+          }}
+        />
         <label htmlFor="bidAmount">BNB</label>
       </p>
 
-      <button className="joinAuctionButton btn" disabled>Join Auction</button>
+      <button className="joinAuctionButton btn" disabled={!isConnected} onClick={() => dispatch(joinAuction(bidAmount))}>Join Auction</button>
 
-      <h2>Account: <span className="showAccount">{connectedAccount}</span></h2>
-      <h2>Status: <span className="status">{connectionStatus}</span></h2>
+      <h2>Account: {connectedAccount}</h2>
+      <h2>Status: {connectionStatus}</h2>
     </div>
   )
 }
