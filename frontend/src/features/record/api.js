@@ -1,11 +1,10 @@
 import axios from 'axios';
-import { OFFSET } from './constants';
 
 axios.defaults.baseURL = 'http://localhost:3001'
 
-export const getTxList = async (address, page = 1) => {
-  const params = { address, page, offset: OFFSET };
-  const response = await axios.get('/account/txList', { params })
+export const getAccountBalance = async ({ address }) => {
+  const params = { address };
+  const response = await axios.get('/account/balance', { params })
   if (response.status === 200) {
     return response.data;
   } else {
@@ -13,8 +12,48 @@ export const getTxList = async (address, page = 1) => {
   }
 };
 
-export const getAddressTokenBalance = async (address, page = 1) => {
-  const params = { address, page, offset: OFFSET };
+export const getTxList = async ({ address }) => {
+  const params = { address };
+  const response = await axios.get('/account/txlist', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenTx = async ({ address, contractAddress }) => {
+  const params = { address, contractaddress: contractAddress };
+  const response = await axios.get('/account/tokentx', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenNftTx = async ({ address, contractAddress }) => {
+  const params = { address, contractaddress: contractAddress };
+  const response = await axios.get('/account/tokennfttx', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenBalance = async ({ address, contractAddress }) => {
+  const params = { address, contractaddress: contractAddress };
+  const response = await axios.get('/account/tokenbalance', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getAddressTokenBalance = async ({ address }) => {
+  const params = { address };
   const response = await axios.get('/account/addressTokenBalance', { params })
   if (response.status === 200) {
     return response.data;
@@ -23,9 +62,58 @@ export const getAddressTokenBalance = async (address, page = 1) => {
   }
 };
 
-export const getTokenHolderList = async (contractAddress, page = 1) => {
-  const params = { contractaddress: contractAddress, page, offset: OFFSET };
+export const getAddressTokenNftBalance = async ({ address }) => {
+  const params = { address };
+  const response = await axios.get('/account/addressTokenNftBalance', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTxReceiptStatus = async ({ txHash }) => {
+  const params = { txhash: txHash };
+  const response = await axios.get('/transaction/gettxreceiptstatus', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenHolderList = async ({ contractAddress }) => {
+  const params = { contractaddress: contractAddress };
   const response = await axios.get('/token/tokenholderlist', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+export const getTokenInfo = async ({ contractAddress }) => {
+  const params = { contractaddress: contractAddress };
+  const response = await axios.get('/token/tokeninfo', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenSupply = async ({ contractAddress }) => {
+  const params = { contractaddress: contractAddress };
+  const response = await axios.get('/stats/tokensupply', { params })
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getTokenCSupply = async ({ contractAddress }) => {
+  const params = { contractaddress: contractAddress };
+  const response = await axios.get('/stats/tokencsupply', { params })
   if (response.status === 200) {
     return response.data;
   } else {
