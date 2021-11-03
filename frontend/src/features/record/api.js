@@ -1,6 +1,24 @@
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:3001'
+axios.defaults.baseURL = 'http://localhost:3001/api'
+
+export const getWalletAddressOptions = async () => {
+  const response = await axios.get('/options/walletAddress');
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+};
+
+export const getContractAddressOptions = async () => {
+  const response = await axios.get('/options/contractAddress');
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+}
 
 export const getAccountBalance = async ({ address }) => {
   const params = { address };

@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from 'react-data-table-component';
+import Dropdown from 'react-multilevel-dropdown';
 import InputWithLabel from '../../common/InputWithLabel';
+import { CellWithCopy } from '../../common/CopyToClipboardButton';
 import {
+  getWalletAddressOptions, getContractAddressOptions,
   getAccountBalance, getTxList, getTokenTx, getTokenNftTx, getTokenBalance,
   getAddressTokenBalance, getAddressTokenNftBalance, getTxReceiptStatus,
   getTokenHolderList, getTokenInfo, getTokenSupply, getTokenCSupply
@@ -25,7 +28,9 @@ const options = [
 
 const Record = (props) => {
   const [address, setAddress] = useState('');
+  const [addressName, setAddressName] = useState('');
   const [contractAddress, setContractAddress] = useState('');
+  const [contractAddressName, setContractAddressName] = useState('');
   const [txHash, setTxHash] = useState('');
   const [isAddressEnabled, setIsAddressEnabled] = useState(options[0].address);
   const [isContractAddressEnabled, setIsContractAddressEnabled] = useState(options[0].contractAddress);
@@ -35,7 +40,19 @@ const Record = (props) => {
   const [data, setData] = useState([]);
   const [errMsg, setErrMsg] = useState('');
   const [apiFn, setApiFn] = useState(() => (params) => options[0].api(params));
+  const [walletAddressOptions, setWalletAddressOptions] = useState({});
+  const [contractAddressOptions, setContractAddressOptions] = useState({});
   let columns = [];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let options = await getWalletAddressOptions();
+      setWalletAddressOptions(options);
+      options = await getContractAddressOptions();
+      setContractAddressOptions(options);
+    };
+    fetchData();
+  }, []);
 
   const handleChangeDisplay = async (option) => {
     option.address ? setIsAddressEnabled(true) : setIsAddressEnabled(false);
@@ -66,12 +83,17 @@ const Record = (props) => {
     columns = Object.keys(data[0]).map((key) => {
       const splitedKey = key.replace(/([A-Z])/g, ' $1');
       const name = splitedKey.charAt(0).toUpperCase() + splitedKey.slice(1);
-      return {
+      const result = {
         name,
         selector: (row) => row[key],
-        width: '200px',
         wrap: true
+      };
+      if (['hash', 'blockHash', 'from', 'to', 'tokenName', 'input', 'contractAddress', 'TokenAddress', 'TokenHolderAddress'].includes(key)) {
+        result.cell = (row) => <CellWithCopy row={row} name={key} />
+      } else if (['timeStamp'].includes(key)) {
+        result.selector = (row) => new Date(parseInt(row[key] + '000')).toGMTString();
       }
+      return result;
     });
   }
 
@@ -86,6 +108,60 @@ const Record = (props) => {
     setData(tempData);
   }
 
+  const createDropdownItemsAddress = (data) => {
+    const result = [];
+    for (const [key, value] of Object.entries(data)) {
+      let onClickFn = () => {};
+      const isValueObject = typeof value === 'object';
+      if (!isValueObject) {
+        onClickFn = () => {
+          document.getElementById('addressDropdown').click();
+          setAddressName(key);
+          setAddress(value);
+        }
+      }
+      const item = (
+        <Dropdown.Item key={key} onClick={onClickFn}>
+          {key}
+          {isValueObject ? (
+            <Dropdown.Submenu position='right'>
+              {createDropdownItemsAddress(value)}
+            </Dropdown.Submenu>
+          ) : null}
+        </Dropdown.Item>
+      );
+      result.push(item);
+    }
+    return result;
+  };
+
+  const createDropdownItemsContractAddress = (data) => {
+    const result = [];
+    for (const [key, value] of Object.entries(data)) {
+      let onClickFn = () => {};
+      const isValueObject = typeof value === 'object';
+      if (!isValueObject) {
+        onClickFn = () => {
+          document.getElementById('contractAddressDropdown').click();
+          setContractAddressName(key);
+          setContractAddress(value);
+        }
+      }
+      const item = (
+        <Dropdown.Item key={key} onClick={onClickFn}>
+          {key}
+          {isValueObject ? (
+            <Dropdown.Submenu position='right'>
+              {createDropdownItemsContractAddress(value)}
+            </Dropdown.Submenu>
+          ) : null}
+        </Dropdown.Item>
+      );
+      result.push(item);
+    }
+    return result;
+  };
+
   return (
     <div>
       <hr />
@@ -97,10 +173,30 @@ const Record = (props) => {
       }
       <div className='recordSearchCriteria'>
         {isAddressEnabled ? (
-          <InputWithLabel name='address' displayName='Address' value={address} onChange={ (e) => setAddress(e.target.value) } />
+          <div>
+            <Dropdown id='addressDropdown' title='Select Address' position='right'>
+              {createDropdownItemsAddress(walletAddressOptions)}
+            </Dropdown>
+            {addressName !== '' ? (
+              <>
+                <span>{addressName} : </span>
+                <span>{address}</span>
+              </>
+            ) : null}
+          </div>
         ) : null}
         {isContractAddressEnabled ? (
-          <InputWithLabel name='contractAddress' displayName='Contract Address' value={contractAddress} onChange={ (e) => setContractAddress(e.target.value) } />
+          <div>
+            <Dropdown id='contractAddressDropdown' title='Select Contract Address' position='right'>
+              {createDropdownItemsContractAddress(contractAddressOptions)}
+            </Dropdown>
+            {contractAddressName !== '' ? (
+              <>
+                <span>{contractAddressName} : </span>
+                <span>{contractAddress}</span>
+              </>
+            ) : null}
+          </div>
         ) : null}
         {isTxHashEnabled ? (
           <InputWithLabel name='txHash' displayName='Transaction Hash' value={txHash} onChange={ (e) => setTxHash(e.target.value) } />

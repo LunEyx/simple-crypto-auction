@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconContext } from 'react-icons';
 import './App.css';
 import Wallet from './features/wallet/Wallet';
 import Record from './features/record/Record';
@@ -12,10 +13,10 @@ function App() {
   }
 
   return (
-    <div>
+    <IconContext.Provider value={{ style: { verticalAlign: 'middle' }}}>
       <Wallet />
       <Record />
-    </div>
+    </IconContext.Provider>
   );
 }
 

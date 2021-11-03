@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
-const { API_KEY } = require('./constants');
-const { getCache } = require('./cache');
+const { API_KEY } = require('../constants');
+const { getCache } = require('../cache');
 
 const router = express.Router();
 axios.defaults.baseURL = 'https://api.bscscan.com/api';
