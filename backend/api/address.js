@@ -1,29 +1,31 @@
 const express = require('express');
 const csv = require('csvtojson');
 const fs = require('fs');
-const { log } = require('console');
+const {
+  ASSETS_FOLDER,
+  WALLET_CSV_SUFFIX, WALLET_CSV_NAME_COL, WALLET_CSV_ADDRESS_COL,
+  CONTRACT_CSV_SUFFIX, CONTRACT_CSV_NAME_COL, CONTRACT_CSV_ADDRESS_COL
+} = require('../constants');
 
 const router = express.Router();
 const fsPromises = fs.promises;
-const directory = './assets';
-
-
 
 // Read all csv file in assets/ suffixed with 'Wallets'
 router.get('/walletAddress', async (req, res) => {
   try {
     let options = {};
-    const filenames = await fsPromises.readdir(directory);
+    let dictionary = {};
+    const filenames = await fsPromises.readdir(ASSETS_FOLDER);
     for (const filename of filenames) {
-      if (filename.slice(-12) === ' Wallets.csv') {
+      if (filename.slice(-12) === WALLET_CSV_SUFFIX) {
         const name = filename.slice(0, -12);
         options[name] = {}
-        const data = await csv().fromFile(directory + '/' + filename);
-        const lastIndex = Object.keys(data[0]).indexOf('Wallet address');
+        const data = await csv().fromFile(ASSETS_FOLDER + '/' + filename);
+        const lastIndex = Object.keys(data[0]).indexOf(WALLET_CSV_ADDRESS_COL);
         const headers = Object.keys(data[0]).slice(0, lastIndex);
         for (const row of data) {
           let current = options[name];
-          if (row['Wallet address'].substring(0, 2) !== '0x') {
+          if (row[WALLET_CSV_ADDRESS_COL].substring(0, 2) !== '0x') {
             continue;
           }
           for (const header of headers) {
@@ -31,8 +33,9 @@ router.get('/walletAddress', async (req, res) => {
             if (type === '' || type === '#REF!') {
               type = 'Others';
             }
-            if (header === 'Name') {
-              current[row['Name']] = row['Wallet address'];
+            if (header === WALLET_CSV_NAME_COL) {
+              current[row[WALLET_CSV_NAME_COL]] = row[WALLET_CSV_ADDRESS_COL].toLowerCase();
+              dictionary[row[WALLET_CSV_ADDRESS_COL].toLowerCase()] = row[WALLET_CSV_NAME_COL];
             } else if (current[type] === undefined) {
               current[type] = {};
             }
@@ -41,7 +44,7 @@ router.get('/walletAddress', async (req, res) => {
         }
       }
     }
-    res.json(options);
+    res.json({ options, dictionary });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -50,18 +53,18 @@ router.get('/walletAddress', async (req, res) => {
 router.get('/contractAddress', async (req, res) => {
   try {
     let options = {};
-    const filenames = await fsPromises.readdir(directory);
-    console.log(filenames)
+    let dictionary = {};
+    const filenames = await fsPromises.readdir(ASSETS_FOLDER);
     for (const filename of filenames) {
-      if (filename.slice(-14) === ' Contracts.csv') {
+      if (filename.slice(-14) === CONTRACT_CSV_SUFFIX) {
         const name = filename.slice(0, -14);
         options[name] = {}
-        const data = await csv().fromFile(directory + '/' + filename);
-        const lastIndex = Object.keys(data[0]).indexOf('Address');
+        const data = await csv().fromFile(ASSETS_FOLDER + '/' + filename);
+        const lastIndex = Object.keys(data[0]).indexOf(CONTRACT_CSV_ADDRESS_COL);
         const headers = Object.keys(data[0]).slice(0, lastIndex);
         for (const row of data) {
           let current = options[name];
-          if (row['Address'].substring(0, 2) !== '0x') {
+          if (row[CONTRACT_CSV_ADDRESS_COL].substring(0, 2) !== '0x') {
             continue;
           }
           for (const header of headers) {
@@ -69,8 +72,9 @@ router.get('/contractAddress', async (req, res) => {
             if (type === '' || type === '#REF!') {
               type = 'Others';
             }
-            if (header === 'Contract') {
-              current[row['Contract']] = row['Address'];
+            if (header === CONTRACT_CSV_NAME_COL) {
+              current[row[CONTRACT_CSV_NAME_COL]] = row[CONTRACT_CSV_ADDRESS_COL].toLowerCase();
+              dictionary[row[CONTRACT_CSV_ADDRESS_COL].toLowerCase()] = row[CONTRACT_CSV_NAME_COL];
             } else if (current[type] === undefined) {
               current[type] = {};
             }
@@ -79,7 +83,7 @@ router.get('/contractAddress', async (req, res) => {
         }
       }
     }
-    res.json(options);
+    res.json({ options, dictionary });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }

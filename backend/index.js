@@ -5,7 +5,7 @@ const account = require('./api/account');
 const transaction = require('./api/transaction');
 const token = require('./api/token');
 const stats = require('./api/stats');
-const options = require('./api/options');
+const address = require('./api/address');
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use('/api/account', account);
 app.use('/api/transaction', transaction);
 app.use('/api/token', token);
 app.use('/api/stats', stats);
-app.use('/api/options', options);
+app.use('/api/address', address);
 
 app.listen(PORT, () => {
   console.log(`Demo backend listening at http://localhost:${PORT}`);

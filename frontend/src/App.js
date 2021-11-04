@@ -14,7 +14,7 @@ function App() {
 
   return (
     <IconContext.Provider value={{ style: { verticalAlign: 'middle' }}}>
-      <Wallet />
+      {/* <Wallet /> */}
       <Record />
     </IconContext.Provider>
   );

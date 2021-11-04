@@ -2,8 +2,8 @@ import axios from 'axios';
 
 axios.defaults.baseURL = 'http://localhost:3001/api'
 
-export const getWalletAddressOptions = async () => {
-  const response = await axios.get('/options/walletAddress');
+export const getWalletAddressData = async () => {
+  const response = await axios.get('/address/walletAddress');
   if (response.status === 200) {
     return response.data;
   } else {
@@ -11,8 +11,8 @@ export const getWalletAddressOptions = async () => {
   }
 };
 
-export const getContractAddressOptions = async () => {
-  const response = await axios.get('/options/contractAddress');
+export const getContractAddressData = async () => {
+  const response = await axios.get('/address/contractAddress');
   if (response.status === 200) {
     return response.data;
   } else {

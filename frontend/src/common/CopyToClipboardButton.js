@@ -16,16 +16,12 @@ const CopyToClipboardButton = (props) => {
 };
 
 export const CellWithCopy = (props) => {
-  const { row, name } = props;
-  let displayText = row[name];
-  if (displayText.length > 17 && displayText.substring(0, 2) === '0x') {
-    displayText = row[name].substring(0, 8) + '...' + row[name].slice(-6);
-  }
+  const { displayText, text } = props;
 
   return (
     <div>
       {displayText}
-      <CopyToClipboardButton text={row[name]} />
+      <CopyToClipboardButton text={text} />
     </div>
   );
 }

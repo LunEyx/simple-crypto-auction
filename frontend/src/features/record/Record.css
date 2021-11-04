@@ -1,3 +1,7 @@
 .recordSearchCriteria input {
   width: 500px;
 }
+.noDecoLink {
+  text-decoration: none;
+  color: black;
+}
