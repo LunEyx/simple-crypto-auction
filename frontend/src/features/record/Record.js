@@ -3,7 +3,7 @@ import DataTable from 'react-data-table-component';
 import DateTimePicker from 'react-datetime-picker';
 import InputWithLabel from '../../common/InputWithLabel';
 import { CellWithCopy } from '../../common/CopyToClipboardButton';
-import { displayHash } from '../../common/util';
+import { displayHash, downloadCSV } from '../../common/util';
 import AddressInput from '../../common/AddressInput';
 import CommonAddressInput from '../../common/CommonAddressInput';
 import { BSCSCAN_URL } from './constants';
@@ -17,9 +17,9 @@ import './Record.css';
 
 const options = [
   { name: 'Account Balance', api: getAccountBalance, address: true },
-  { name: 'Transaction List', api: getTxList, address: true, filter: ['contractAddress', 'timeStamp', 'from', 'to'] },
-  { name: 'BEP-20 Token Transaction', api: getTokenTx, address: true, contractAddress: true, filter: ['timeStamp', 'from', 'to'] },
-  { name: 'BEP-721 Token Transaction', api: getTokenNftTx, address: true, contractAddress: true, filter: ['timeStamp', 'from', 'to'] },
+  { name: 'Transaction List', api: getTxList, address: true, filter: ['contractAddress', 'from', 'to', 'timeStamp'] },
+  { name: 'BEP-20 Token Transaction', api: getTokenTx, address: true, contractAddress: true, filter: ['from', 'to', 'timeStamp'] },
+  { name: 'BEP-721 Token Transaction', api: getTokenNftTx, address: true, contractAddress: true, filter: ['from', 'to', 'timeStamp'] },
   { name: 'Token Balance', api: getTokenBalance, address: true, contractAddress: true },
   { name: 'Address BEP-20 Token Holding', api: getAddressTokenBalance, address: true, filter: ['TokenAddress'] }, 
   { name: 'Address BEP-721 Token Holding', api: getAddressTokenNftBalance, address: true, filter: ['TokenAddress'] },
@@ -115,7 +115,7 @@ const Record = (props) => {
           if (row[key].substring(0, 2) !== '0x') {
             return row[key];
           }
-          let displayText = <a href={BSCSCAN_URL + 'address/' + row[key]} target='_blank' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'address/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
           return <CellWithCopy type='address' text={row[key]} displayText={displayText} />
         }
       } else if (['hash'].includes(key)) {
@@ -125,7 +125,7 @@ const Record = (props) => {
           if (row[key].substring(0, 2) !== '0x') {
             return displayHash(row[key], walletName || contractName)
           }
-          let displayText = <a href={BSCSCAN_URL + 'tx/' + row[key]} target='_blank' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'tx/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
           return <CellWithCopy text={row[key]} displayText={displayText} />
         }
       } else if (['blockHash'].includes(key)) {
@@ -135,7 +135,7 @@ const Record = (props) => {
           if (row[key].substring(0, 2) !== '0x') {
             return displayHash(row[key], walletName || contractName)
           }
-          let displayText = <a href={BSCSCAN_URL + 'block/' + row[key]} target='_blank' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'block/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
           return <CellWithCopy text={row[key]} displayText={displayText} />
         }
       } else if (['input'].includes(key)) {
@@ -210,6 +210,8 @@ const Record = (props) => {
     }
   }
 
+  const actionsMemo = <button disabled={data.length === 0} onClick={() => downloadCSV(data)}>Export CSV</button>
+
   return (
     <div>
       <hr />
@@ -254,88 +256,39 @@ const Record = (props) => {
       </div>
       <div id='datatableFilter'>
         <h3>Filter</h3>
-        {filter.includes('contractAddress') ? (
-          <div>
-            <CommonAddressInput
-              name='filterContractAddress'
-              displayName='Contract Address'
-              address={filterCriteria['contractAddress']}
-              addressName={addressDictionary[filterCriteria['contractAddress']]}
-              onChange={(value) => handleFilterChange('contractAddress', value)}
-              walletDropdownOptions={walletAddressOptions}
-              contractDropdownOptions={contractAddressOptions}
-              dropdownOnClick={handleFilterDropdownClick('contractAddress')}
-            />
-          </div>
-        ) : null}
-        {filter.includes('TokenAddress') ? (
-          <div>
-            <CommonAddressInput
-              name='filterTokenAddress'
-              displayName='Token Address'
-              address={filterCriteria['TokenAddress']}
-              addressName={addressDictionary[filterCriteria['TokenAddress']]}
-              onChange={(value) => handleFilterChange('TokenAddress', value)}
-              walletDropdownOptions={walletAddressOptions}
-              contractDropdownOptions={contractAddressOptions}
-              dropdownOnClick={handleFilterDropdownClick('TokenAddress')}
-            />
-          </div>
-        ) : null}
-        {filter.includes('TokenHolderAddress') ? (
-          <div>
-            <CommonAddressInput
-              name='filterTokenHolderAddress'
-              displayName='Token Holder Address'
-              address={filterCriteria['TokenHolderAddress']}
-              addressName={addressDictionary[filterCriteria['TokenHolderAddress']]}
-              onChange={(value) => handleFilterChange('TokenHolderAddress', value)}
-              walletDropdownOptions={walletAddressOptions}
-              contractDropdownOptions={contractAddressOptions}
-              dropdownOnClick={handleFilterDropdownClick('TokenHolderAddress')}
-            />
-          </div>
-        ) : null}
-        {filter.includes('from') ? (
-          <div>
-            <CommonAddressInput
-              name='filterFrom'
-              displayName='From'
-              address={filterCriteria['from']}
-              addressName={addressDictionary[filterCriteria['from']]}
-              onChange={(value) => handleFilterChange('from', value)}
-              walletDropdownOptions={walletAddressOptions}
-              contractDropdownOptions={contractAddressOptions}
-              dropdownOnClick={handleFilterDropdownClick('from')}
-            />
-          </div>
-        ) : null}
-        {filter.includes('to') ? (
-          <div>
-            <CommonAddressInput
-              name='filterTo'
-              displayName='To'
-              address={filterCriteria['to']}
-              addressName={addressDictionary[filterCriteria['to']]}
-              onChange={(value) => handleFilterChange('to', value)}
-              walletDropdownOptions={walletAddressOptions}
-              contractDropdownOptions={contractAddressOptions}
-              dropdownOnClick={handleFilterDropdownClick('to')}
-            />
-          </div>
-        ) : null}
-        {filter.includes('timeStamp') ? (
-          <div>
-            Time Stamp:
-            <DateTimePicker disableClock maxDetail='second' onChange={(value) => handleFilterChange('startDateTime', value)} value={filterCriteria['startDateTime']}/>
-            {' → '}
-            <DateTimePicker disableClock maxDetail='second' onChange={(value) => handleFilterChange('endDateTime', value)} value={filterCriteria['endDateTime']}/>
-          </div>
-        ) : null}
+        {filter.map((criteria) => {
+          if (criteria === 'timeStamp') {
+            return (
+              <div>
+                Time Stamp:
+                <DateTimePicker disableClock maxDetail='second' onChange={(value) => handleFilterChange('startDateTime', value)} value={filterCriteria['startDateTime']}/>
+                {' → '}
+                <DateTimePicker disableClock maxDetail='second' onChange={(value) => handleFilterChange('endDateTime', value)} value={filterCriteria['endDateTime']}/>
+              </div>
+            );
+          } else {
+            const name = criteria.charAt(0).toUpperCase() + criteria.slice(1);
+            return (
+              <div>
+                <CommonAddressInput
+                  name={'filter' + name}
+                  displayName={name.replace(/([A-Z])/g, ' $1')}
+                  address={filterCriteria[criteria]}
+                  addressName={addressDictionary[filterCriteria[criteria]]}
+                  onChange={(value) => handleFilterChange(criteria, value)}
+                  walletDropdownOptions={walletAddressOptions}
+                  contractDropdownOptions={contractAddressOptions}
+                  dropdownOnClick={handleFilterDropdownClick(criteria)}
+                />
+              </div>
+            );
+          }
+        })}
       </div>
       <DataTable
         columns={columns}
         data={filteredData}
+        actions={actionsMemo}
         pagination
         progressPending={isLoading}
       />
