@@ -138,3 +138,13 @@ export const getTokenCSupply = async ({ contractAddress }) => {
     return response.message;
   }
 };
+
+export const getTtkTxList = async () => {
+  const response = await axios.get('/ttk/txlist');
+  console.log(response)
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+}

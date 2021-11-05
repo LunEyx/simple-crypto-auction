@@ -2,9 +2,13 @@ import Dropdown from 'react-multilevel-dropdown';
 import InputWithLabel from "./InputWithLabel";
 import { createDropdownItems } from "./Dropdown";
 import { displayHash } from './util';
+import { useSelector } from 'react-redux';
+import { selectRecord } from '../features/record/recordSlice';
 
 const CommonAddressInput = (props) => {
-  const { name, displayName, disableWallet, disableContract, address, addressName = '', onChange, walletDropdownOptions, contractDropdownOptions, dropdownOnClick } = props;
+  const { name, displayName, disableWallet, disableContract, address, onChange, walletDropdownOptions, contractDropdownOptions, dropdownOnClick } = props;
+  const record = useSelector(selectRecord);
+  const addressName = record.addressDictionary[address] || '';
 
   const handleWalletDropdownItem = (key, value) => {
     document.getElementById(name + 'WalletDropdown').click();

@@ -1,30 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from 'react-data-table-component';
 import DateTimePicker from 'react-datetime-picker';
+import Chart from 'react-google-charts';
+import { useDispatch, useSelector } from 'react-redux';
+import { recordSlice, selectRecord } from './recordSlice';
 import InputWithLabel from '../../common/InputWithLabel';
 import { CellWithCopy } from '../../common/CopyToClipboardButton';
 import { displayHash, downloadCSV } from '../../common/util';
 import AddressInput from '../../common/AddressInput';
 import CommonAddressInput from '../../common/CommonAddressInput';
-import { BSCSCAN_URL } from './constants';
+import { BSCSCAN_URL, walletAddresses } from './constants';
 import {
   getWalletAddressData, getContractAddressData,
   getAccountBalance, getTxList, getTokenTx, getTokenNftTx, getTokenBalance,
   getAddressTokenBalance, getAddressTokenNftBalance, getTxReceiptStatus,
   getTokenHolderList, getTokenInfo, getTokenSupply, getTokenCSupply
 } from './api';
+import {
+  convertToTokenHolderListChartData, convertToTokenTxTransactionChartData, convertToTokenTxQuantityChartData
+} from './chartData';
+import ChartForTTK from './ChartForTTK';
 import './Record.css';
+import MergedChartForTTK from './MergedChartForTTK';
 
 const options = [
   { name: 'Account Balance', api: getAccountBalance, address: true },
   { name: 'Transaction List', api: getTxList, address: true, filter: ['contractAddress', 'from', 'to', 'timeStamp'] },
-  { name: 'BEP-20 Token Transaction', api: getTokenTx, address: true, contractAddress: true, filter: ['from', 'to', 'timeStamp'] },
-  { name: 'BEP-721 Token Transaction', api: getTokenNftTx, address: true, contractAddress: true, filter: ['from', 'to', 'timeStamp'] },
+  {
+    name: 'BEP-20 Token Transaction',
+    api: getTokenTx, address: true,
+    contractAddress: true,
+    filter: ['from', 'to', 'timeStamp'],
+    chartOptions: {
+      chartTypes: ['BarChart', 'Bar'],
+      options: [{}, {}],
+      chartFns: [convertToTokenTxTransactionChartData, convertToTokenTxQuantityChartData]
+    }
+  },
+  {
+    name: 'BEP-721 Token Transaction',
+    api: getTokenNftTx,
+    address: true, contractAddress: true,
+    filter: ['from', 'to', 'timeStamp'],
+    chartOptions: {
+      chartTypes: ['BarChart', 'Bar'],
+      options: [{}, {}],
+      chartFns: [convertToTokenTxTransactionChartData, convertToTokenTxQuantityChartData]
+    }
+  },
   { name: 'Token Balance', api: getTokenBalance, address: true, contractAddress: true },
   { name: 'Address BEP-20 Token Holding', api: getAddressTokenBalance, address: true, filter: ['TokenAddress'] }, 
   { name: 'Address BEP-721 Token Holding', api: getAddressTokenNftBalance, address: true, filter: ['TokenAddress'] },
   { name: 'Get Transaction Receipt Status', api: getTxReceiptStatus, txHash: true },
-  { name: 'Token Holder List', api: getTokenHolderList, contractAddress: true, filter: ['TokenHolderAddress'] },
+  {
+    name: 'Token Holder List', api: getTokenHolderList, contractAddress: true, filter: ['TokenHolderAddress'],
+    chartOptions: {
+      chartTypes: ['PieChart'],
+      options: [{is3D: true}],
+      chartFns: [convertToTokenHolderListChartData],
+    }
+  },
   { name: 'Token Info', api: getTokenInfo, contractAddress: true },
   { name: 'BEP-20 Token Supply', api: getTokenSupply, contractAddress: true },
   { name: 'BEP-20 Token CirculatingSupply', api: getTokenCSupply, contractAddress: true }
@@ -44,28 +79,28 @@ const Record = (props) => {
   const [data, setData] = useState([]);
   const [errMsg, setErrMsg] = useState('');
   const [apiFn, setApiFn] = useState(() => (params) => options[0].api(params));
-  const [addressDictionary, setAddressDictionary] = useState({});
   const [walletAddressOptions, setWalletAddressOptions] = useState({});
   const [contractAddressOptions, setContractAddressOptions] = useState({});
-  const [walletAddressDictionary, setWalletAddressDictionary] = useState({});
-  const [contractAddressDictionary, setContractAddressDictionary] = useState({});
   const [filter, setFilter] = useState([]);
   const [filterCriteria, setFilterCriteria] = useState({});
+  const [chartOptions, setChartOptions] = useState(options[0].chartOptions);
+  const [nextChartOptions, setNextChartOptions] = useState(options[0].chartOptions)
   let columns = [];
   let filteredData = data;
+
+  const record = useSelector(selectRecord);
+  const dispatch = useDispatch()
 
   useEffect(() => {
     const fetchData = async () => {
       let dictionary = {};
       let data = await getWalletAddressData();
       setWalletAddressOptions(data.options);
-      setWalletAddressDictionary(data.dictionary);
       dictionary = data.dictionary;
       data = await getContractAddressData();
       setContractAddressOptions(data.options);
-      setContractAddressDictionary(data.dictionary);
       dictionary = { ...dictionary, ...data.dictionary }
-      setAddressDictionary(dictionary)
+      dispatch(recordSlice.actions.setAddressDictionary(dictionary));
     };
     fetchData();
   }, []);
@@ -75,6 +110,7 @@ const Record = (props) => {
     option.contractAddress ? setIsContractAddressEnabled(true) : setIsContractAddressEnabled(false);
     option.txHash ? setIsTxHashEnabled(true) : setIsTxHashEnabled(false);
     option.filter ? setFilter(option.filter) : setFilter([]);
+    option.chartOptions ? setNextChartOptions(option.chartOptions) : setNextChartOptions(null);
     setApiFn(() => (params) => option.api(params));
     setCurrentOption(option.name);
   }
@@ -83,6 +119,7 @@ const Record = (props) => {
     setIsLoading(true);
     setData([]);
     setFilterCriteria({});
+    setChartOptions(nextChartOptions);
     try {
       const response = await apiFn(params);
       if (response.status === '1') {
@@ -108,44 +145,53 @@ const Record = (props) => {
         sortable: true,
         width: '200px'
       };
+      if (['TokenHolderQuantity'].includes(key)) {
+        result.sortFunction = (rowA, rowB) => {
+          const a = parseInt(rowA.TokenHolderQuantity);
+          const b = parseInt(rowB.TokenHolderQuantity);
+
+          if (a > b) {
+            return 1;
+          } else if (a < b) {
+            return -1;
+          }
+          return 0;
+        }
+      }
       if (['from', 'to', 'contractAddress', 'TokenAddress', 'TokenHolderAddress'].includes(key)) {
         result.cell = (row) => {
-          const walletName = walletAddressDictionary[row[key]];
-          const contractName = contractAddressDictionary[row[key]];
+          const addressName = record.addressDictionary[row[key]];
           if (row[key].substring(0, 2) !== '0x') {
             return row[key];
           }
-          let displayText = <a href={BSCSCAN_URL + 'address/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'address/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], addressName)}</a>
           return <CellWithCopy type='address' text={row[key]} displayText={displayText} />
         }
       } else if (['hash'].includes(key)) {
         result.cell = (row) => {
-          const walletName = walletAddressDictionary[row[key]];
-          const contractName = contractAddressDictionary[row[key]];
+          const addressName = record.addressDictionary[row[key]];
           if (row[key].substring(0, 2) !== '0x') {
-            return displayHash(row[key], walletName || contractName)
+            return displayHash(row[key], addressName)
           }
-          let displayText = <a href={BSCSCAN_URL + 'tx/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'tx/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], addressName)}</a>
           return <CellWithCopy text={row[key]} displayText={displayText} />
         }
       } else if (['blockHash'].includes(key)) {
         result.cell = (row) => {
-          const walletName = walletAddressDictionary[row[key]];
-          const contractName = contractAddressDictionary[row[key]];
+          const addressName = record.addressDictionary[row[key]];
           if (row[key].substring(0, 2) !== '0x') {
-            return displayHash(row[key], walletName || contractName)
+            return displayHash(row[key], addressName)
           }
-          let displayText = <a href={BSCSCAN_URL + 'block/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], walletName || contractName)}</a>
+          let displayText = <a href={BSCSCAN_URL + 'block/' + row[key]} target='_blank' rel='noreferrer' className='noDecoLink'>{displayHash(row[key], addressName)}</a>
           return <CellWithCopy text={row[key]} displayText={displayText} />
         }
       } else if (['input'].includes(key)) {
         result.cell = (row) => {
-          const walletName = walletAddressDictionary[row[key]];
-          const contractName = contractAddressDictionary[row[key]];
+          const addressName = record.addressDictionary[row[key]];
           if (row[key].substring(0, 2) !== '0x') {
-            return displayHash(row[key], walletName || contractName)
+            return displayHash(row[key], addressName)
           }
-          return <CellWithCopy text={row[key]} displayText={displayHash(row[key], walletName || contractName)} />
+          return <CellWithCopy text={row[key]} displayText={displayHash(row[key], addressName)} />
         }
       } else if (['timeStamp'].includes(key)) {
         result.cell = (row) => new Date(parseInt(row[key] + '000')).toLocaleString();
@@ -177,12 +223,12 @@ const Record = (props) => {
 
   const handleAddressChange = (address) => {
     setAddress(address);
-    setAddressName(walletAddressDictionary[address]);
+    setAddressName(record.addressDictionary[address]);
   }
 
   const handleContractAddressChange = (address) => {
     setContractAddress(address);
-    setContractAddressName(contractAddressDictionary[address]);
+    setContractAddressName(record.addressDictionary[address]);
   }
 
   const handleFilterChange = (key, value) => {
@@ -211,11 +257,24 @@ const Record = (props) => {
   }
 
   const actionsMemo = <button disabled={data.length === 0} onClick={() => downloadCSV(data)}>Export CSV</button>
+  let chartData = [];
+  if (!!chartOptions) {
+    const params = {
+      address,
+      contractAddress,
+      txHash
+    };
+    for (const fn of chartOptions.chartFns) {
+      chartData.push(fn(data, params, record.addressDictionary));
+    }
+  }
 
   return (
     <div>
       <hr />
       <h1>Record</h1>
+      <MergedChartForTTK />
+      {/* {walletAddresses.map((walletAddress) => <ChartForTTK key={walletAddress} walletAddress={walletAddress} />)} */}
       <h3>Select To Display</h3>
       {options.map((option) => (
         <button key={option.name} disabled={isLoading || currentOption === option.name} onClick={() => handleChangeDisplay(option)}>{option.name}</button>
@@ -259,7 +318,7 @@ const Record = (props) => {
         {filter.map((criteria) => {
           if (criteria === 'timeStamp') {
             return (
-              <div>
+              <div key={criteria}>
                 Time Stamp:
                 <DateTimePicker disableClock maxDetail='second' onChange={(value) => handleFilterChange('startDateTime', value)} value={filterCriteria['startDateTime']}/>
                 {' → '}
@@ -269,12 +328,11 @@ const Record = (props) => {
           } else {
             const name = criteria.charAt(0).toUpperCase() + criteria.slice(1);
             return (
-              <div>
+              <div key={criteria}>
                 <CommonAddressInput
                   name={'filter' + name}
                   displayName={name.replace(/([A-Z])/g, ' $1')}
                   address={filterCriteria[criteria]}
-                  addressName={addressDictionary[filterCriteria[criteria]]}
                   onChange={(value) => handleFilterChange(criteria, value)}
                   walletDropdownOptions={walletAddressOptions}
                   contractDropdownOptions={contractAddressOptions}
@@ -285,6 +343,20 @@ const Record = (props) => {
           }
         })}
       </div>
+      {!!chartOptions && data.length > 0 ? (
+        <>
+          {chartOptions.chartTypes.map((chartType, index) =>
+            <Chart
+              width='700px'
+              height='300px'
+              chartType={chartType}
+              loader={<div>Loading Chart</div>}
+              data={chartData[index]}
+              options={chartOptions.options[index]}
+            />
+          )}
+        </>
+      ) : null}
       <DataTable
         columns={columns}
         data={filteredData}
