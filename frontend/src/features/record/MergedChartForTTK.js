@@ -18,7 +18,11 @@ const MergedChartForTTK = (props) => {
       response = await getTtkHistoricalPrice();
       setHistoricalPrice(response);
       response = await getTtkTxList();
-      setRawData(response);
+      const rawData = {};
+      for (const [key, value] of Object.entries(response)) {
+        rawData[key.toLowerCase()] = value;
+      }
+      setRawData(rawData);
       setIsLoading(false)
     } catch (err) {
       console.log(err.message)
@@ -72,6 +76,7 @@ const MergedChartForTTK = (props) => {
     }
   }
 
+  console.log(rawData)
   let maxValue = 0;
 
   const chartData = [];
@@ -91,8 +96,6 @@ const MergedChartForTTK = (props) => {
   const changeSelectedUser = (value) => {
     setSelectedUser(value);
   }
-
-  console.log(newData)
 
   return isLoading ? (
     <div>Extracting Data...</div>
@@ -127,7 +130,7 @@ const MergedChartForTTK = (props) => {
         walletDropdownOptions={userDropdownOptions}
         dropdownOnClick={dropdownOnClick}
       />
-      {rawData[selectedUser] ? null : <div style={{ color: 'red', fontWeight: 'bold' }}>User Not Found</div>}
+      {!selectedUser || !!rawData[selectedUser] ? null : <div style={{ color: 'red', fontWeight: 'bold' }}>User Not Found</div>}
     </>
   );
 };
