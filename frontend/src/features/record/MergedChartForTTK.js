@@ -3,6 +3,7 @@ import Chart from 'react-google-charts';
 import CommonAddressInput from '../../common/CommonAddressInput';
 import { getTtkTxList, getTtkHistoricalPrice, getUserAddress } from './api';
 import { ETHER_UNIT } from './constants';
+import { testData } from './testData';
 
 const MergedChartForTTK = (props) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +77,6 @@ const MergedChartForTTK = (props) => {
     }
   }
 
-  console.log(rawData)
   let maxValue = 0;
 
   const chartData = [];
@@ -96,6 +96,22 @@ const MergedChartForTTK = (props) => {
   const changeSelectedUser = (value) => {
     setSelectedUser(value);
   }
+
+  /*
+  Start test data for coinmarketcap.com api for quote historical api
+  */
+
+  const testQuote = testData.data.quotes;
+  const outputData = {}
+  for (const row of testQuote) {
+    outputData[new Date(row.timestamp)] = { price: row.quote.USD.price, priceBTC: 0 };
+  }
+
+  console.log(outputData)
+
+  /*
+  End test data
+  */
 
   return isLoading ? (
     <div>Extracting Data...</div>
