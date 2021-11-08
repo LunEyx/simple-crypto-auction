@@ -141,7 +141,24 @@ export const getTokenCSupply = async ({ contractAddress }) => {
 
 export const getTtkTxList = async () => {
   const response = await axios.get('/ttk/txlist');
-  console.log(response)
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+}
+
+export const getTtkHistoricalPrice = async () => {
+  const response = await axios.get('/ttk/historicalPrice');
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return response.message;
+  }
+}
+
+export const getUserAddress = async () => {
+  const response = await axios.get('/address/ttkUser');
   if (response.status === 200) {
     return response.data;
   } else {

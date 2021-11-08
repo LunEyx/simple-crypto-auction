@@ -10,3 +10,6 @@ module.exports.WALLET_CSV_ADDRESS_COL = 'Wallet address';
 module.exports.CONTRACT_CSV_SUFFIX = ' Contracts.csv';
 module.exports.CONTRACT_CSV_NAME_COL = 'Contract';
 module.exports.CONTRACT_CSV_ADDRESS_COL = 'Address';
+module.exports.TTK_USER_CSV_FILENAME = 'TTK Users.csv';
+module.exports.TTK_USER_CSV_NAME_COL = 'Name';
+module.exports.TTK_USER_CSV_ADDRESS_COL = 'Wallet address';

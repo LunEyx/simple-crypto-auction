@@ -1,79 +1,23 @@
 import { useEffect, useState } from 'react';
 import Chart from 'react-google-charts';
-import { getTtkTxList } from './api';
+import CommonAddressInput from '../../common/CommonAddressInput';
+import { getTtkTxList, getTtkHistoricalPrice, getUserAddress } from './api';
 import { ETHER_UNIT } from './constants';
 
 const MergedChartForTTK = (props) => {
-  // const { walletAddress } = props;
-  // const contractAddress = '0x39703A67bAC0E39f9244d97f4c842D15Fbad9C1f';
-  // const walletAddress = '0xb4376ffb81dc664e95ffcec13a35560f62a71b97';
-
   const [isLoading, setIsLoading] = useState(true);
-  const [retry, setRetry] = useState(1);
   const [rawData, setRawData] = useState([]);
-
-  // const retryApi = (walletAddress, fn) => {
-  //   let retry = 20;
-  //   let delay = 1000;
-    
-  //   return Promise.resolve().then(async () => {
-  //     for (let i = 0; i < retry; i++) {
-  //       const response = await fn();
-  //       if (response.status === '1') {
-  //         const data = [];
-  //         let counter = 1;
-  //         for (const row of response.result) {
-  //           const record = [];
-  //           record.push('');
-  //           const date = new Date(parseInt(row['timeStamp'] + '000'))
-  //           record.push(roundDate(date));
-  //           record.push(counter);
-  //           counter += 1
-  //           record.push(row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase');
-  //           record.push(parseInt(row['value']) / ETHER_UNIT);
-  //           data.push(record);
-  //         }
-  //         return data;
-  //       }
-  //       await new Promise((resolve) => setTimeout(() => resolve(), delay));
-  //     }
-  //   })
-  // }
-
-  // useEffect(async () => {
-  //   Promise.all(walletAddresses.map((walletAddress) => retryApi(walletAddress, () => getTokenTx({ address: walletAddress, contractAddress: contractAddress }))))
-  //   .then((values) => {
-  //     setRawData(values.flat(1))
-  //     setIsLoading(false)
-  //   })
-  // })
-
-  /*
-  useEffect(async () => {
-    try {
-      let retry = 20;
-      let delay = 5000;
-      for (let i = 0; i < retry; i++) {
-        const response = await getTokenTx({address: walletAddress, contractAddress: contractAddress});
-        if (response.status === '1') {
-          setRawData(response.result);
-          setIsLoading(false);
-          break;
-        } else {
-          console.log(response.message);
-          setRetry(i + 1)
-          await new Promise((resolve) => setTimeout(() => resolve(), delay));
-        }
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
-  */
+  const [historicalPrice, setHistoricalPrice] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [userDropdownOptions, setUserDropdownOptions] = useState({});
 
   useEffect(async () => {
     try {
-      const response = await getTtkTxList();
+      let response = await getUserAddress();
+      setUserDropdownOptions(response.options);
+      response = await getTtkHistoricalPrice();
+      setHistoricalPrice(response);
+      response = await getTtkTxList();
       setRawData(response);
       setIsLoading(false)
     } catch (err) {
@@ -88,37 +32,43 @@ const MergedChartForTTK = (props) => {
   }
 
   const roundDateToHour = (timeStamp) => {
-    timeStamp -= timeStamp % (6 * 60 * 60 * 1000);
+    timeStamp -= timeStamp % (60 * 60 * 1000);
     return new Date(timeStamp);
   }
 
-  const data = [];
-  let counter = 1;
-  for (const walletAddress of Object.keys(rawData)) {
-    for (const row of rawData[walletAddress]) {
-      const record = [];
-      record.push('');
-      const date = new Date(parseInt(row['timeStamp'] + '000'))
-      record.push(date);
-      record.push(counter);
-      counter += 1
-      record.push(row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase');
-      record.push(parseInt(row['value']) / ETHER_UNIT);
-      data.push(record);
+  const ttkHistoricalPrice = {};
+  for (const row of historicalPrice) {
+    const time = new Date((row.time - row.time % (30 * 60)) * 1000);
+    if (!ttkHistoricalPrice[time]) {
+      ttkHistoricalPrice[time] = { price: row.price, priceBTC: row.priceBTC };
     }
   }
 
   const newData = {Sales: {}, Purchase: {}};
-  for (const walletAddress of Object.keys(rawData)) {
+  if (!!selectedUser && rawData[selectedUser]) {
+    const walletAddress = selectedUser;
     for (const row of rawData[walletAddress]) {
       const timeStamp = roundDateToHour(parseInt(row.timeStamp + '000'));
+      const price = ttkHistoricalPrice[timeStamp] ? ttkHistoricalPrice[timeStamp].price : 0;
       const status = row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase';
 
       if (!newData[status][timeStamp]) {
-        newData[status][timeStamp] = { count: 0, token: 0 };
+        newData[status][timeStamp] = { price, token: 0 };
       }
-      newData[status][timeStamp].count += 1
       newData[status][timeStamp].token += row.value / ETHER_UNIT;
+    }
+  } else {
+    for (const walletAddress of Object.keys(rawData)) {
+      for (const row of rawData[walletAddress]) {
+        const timeStamp = roundDateToHour(parseInt(row.timeStamp + '000'));
+        const price = ttkHistoricalPrice[timeStamp] ? ttkHistoricalPrice[timeStamp].price : 0;
+        const status = row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase';
+
+        if (!newData[status][timeStamp]) {
+          newData[status][timeStamp] = { price, token: 0 };
+        }
+        newData[status][timeStamp].token += row.value / ETHER_UNIT;
+      }
     }
   }
 
@@ -126,58 +76,59 @@ const MergedChartForTTK = (props) => {
 
   const chartData = [];
   for (const [timeStamp, row] of Object.entries(newData.Purchase)) {
-    if (row.count > maxValue) maxValue = row.count;
-    chartData.push(['', new Date(timeStamp), row.count, 'Purchase', row.token]);
+    if (row.price > maxValue) maxValue = row.price;
+    chartData.push(['', new Date(timeStamp), row.price, 'Purchase', row.token]);
   }
   for (const [timeStamp, row] of Object.entries(newData.Sales)) {
-    if (row.count > maxValue) maxValue = row.count;
-    chartData.push(['', new Date(timeStamp), row.count, 'Sales', row.token]);
+    if (row.price > maxValue) maxValue = row.price;
+    chartData.push(['', new Date(timeStamp), row.price, 'Sales', row.token]);
   }
 
+  const dropdownOnClick = (key, value) => {
+    setSelectedUser(value);
+  }
 
+  const changeSelectedUser = (value) => {
+    setSelectedUser(value);
+  }
+
+  console.log(newData)
 
   return isLoading ? (
-    <div>Retry...{retry}</div>
+    <div>Extracting Data...</div>
   ) : (
-    <Chart
-      chartType='BubbleChart'
-      loader={<div>Loading Chart...</div>}
-      data={[
-        ['ID', 'Date', 'No. of Transactions', 'Status', 'No. of Token'],
-        ...chartData
-      ]}
-      options={{
-        title: 'MergedChartForTTK',
-        vAxis: { title: 'Price', maxValue: maxValue },
-        hAxis: { title: 'Date' },
-        explorer: {
-          axis: 'horizontal',
-          actions: ['dragToZoom', 'rightClickToReset'],
-          keepInBounds: true
-        }
-      }}
-      chartPackages={['corechart', 'controls']}
-      controls={[
-        {
-          controlType: 'DateRangeFilter',
-          options: {
-            filterColumnIndex: 1,
-            ui: {
-              step: 'hour'
-            }
-          },
-          controlPosition: 'bottom',
-          controlWrapperParams: {
-            state: {
-              range: {
-                start: new Date(2000, 1, 1),
-                end: new Date()
-              }
-            }
+    <>
+      <Chart
+        width={'100%'}
+        height={'500px'}
+        chartType='BubbleChart'
+        loader={<div>Loading Chart...</div>}
+        data={[
+          ['ID', 'Date', 'Price (USD)', 'Status', 'No. of Token'],
+          ...chartData
+        ]}
+        options={{
+          title: 'MergedChartForTTK',
+          vAxis: { title: 'Price (USD)', maxValue: maxValue },
+          hAxis: { title: 'Date' },
+          explorer: {
+            axis: 'horizontal',
+            actions: ['dragToZoom', 'rightClickToReset'],
+            keepInBounds: true
           }
-        }
-      ]}
-    />
+        }}
+      />
+      <CommonAddressInput
+        name='user'
+        displayName='User'
+        disableContract='true'
+        address={selectedUser}
+        onChange={changeSelectedUser}
+        walletDropdownOptions={userDropdownOptions}
+        dropdownOnClick={dropdownOnClick}
+      />
+      {rawData[selectedUser] ? null : <div style={{ color: 'red', fontWeight: 'bold' }}>User Not Found</div>}
+    </>
   );
 };
 
