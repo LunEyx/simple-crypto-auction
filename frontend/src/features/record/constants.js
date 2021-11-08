@@ -95,4 +95,4 @@ export const walletAddresses = [
   '0x1Aa62E8aBC31270DEf8C548379B04E4ed47546D7',
   '0x2d0032BF2cB2434A4f5EbC222565976B04551469',
   '0x5Cbc816bB51d8B46e9DefAeB4bEbe70F3899af59',
-].filter((value, index, self) => self.indexOf(value) == index)
+].filter((value, index, self) => self.indexOf(value) === index)

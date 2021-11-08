@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import Chart from 'react-google-charts';
-import { getTtkTxList, getTokenNftTx, getTokenTx } from './api';
-import { ETHER_UNIT, walletAddresses } from './constants';
+import { getTtkTxList } from './api';
+import { ETHER_UNIT } from './constants';
 
 const MergedChartForTTK = (props) => {
   // const { walletAddress } = props;
-  const contractAddress = '0x39703A67bAC0E39f9244d97f4c842D15Fbad9C1f';
+  // const contractAddress = '0x39703A67bAC0E39f9244d97f4c842D15Fbad9C1f';
   // const walletAddress = '0xb4376ffb81dc664e95ffcec13a35560f62a71b97';
 
   const [isLoading, setIsLoading] = useState(true);
@@ -122,14 +122,19 @@ const MergedChartForTTK = (props) => {
     }
   }
 
+  let maxValue = 0;
+
   const chartData = [];
   for (const [timeStamp, row] of Object.entries(newData.Purchase)) {
+    if (row.count > maxValue) maxValue = row.count;
     chartData.push(['', new Date(timeStamp), row.count, 'Purchase', row.token]);
   }
   for (const [timeStamp, row] of Object.entries(newData.Sales)) {
+    if (row.count > maxValue) maxValue = row.count;
     chartData.push(['', new Date(timeStamp), row.count, 'Sales', row.token]);
   }
-  console.log(chartData);
+
+
 
   return isLoading ? (
     <div>Retry...{retry}</div>
@@ -143,9 +148,35 @@ const MergedChartForTTK = (props) => {
       ]}
       options={{
         title: 'MergedChartForTTK',
-        vAxis: { title: 'Price' },
-        hAxis: { title: 'Date' }
+        vAxis: { title: 'Price', maxValue: maxValue },
+        hAxis: { title: 'Date' },
+        explorer: {
+          axis: 'horizontal',
+          actions: ['dragToZoom', 'rightClickToReset'],
+          keepInBounds: true
+        }
       }}
+      chartPackages={['corechart', 'controls']}
+      controls={[
+        {
+          controlType: 'DateRangeFilter',
+          options: {
+            filterColumnIndex: 1,
+            ui: {
+              step: 'hour'
+            }
+          },
+          controlPosition: 'bottom',
+          controlWrapperParams: {
+            state: {
+              range: {
+                start: new Date(2000, 1, 1),
+                end: new Date()
+              }
+            }
+          }
+        }
+      ]}
     />
   );
 };
