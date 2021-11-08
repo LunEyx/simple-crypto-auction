@@ -32,18 +32,30 @@ module.exports.getCache = (res, params) => {
   }
 }
 
+const getRedisCacheAsync = (key) => {
+  return new Promise((resolve, reject) => {
+    client.get(key, (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    })
+  });
+}
+
 module.exports.getCacheWithoutResponse = async (params) => {
   try {
-    // const result = await client.get(JSON.stringify(params))
-    // if (result) {
-    //   console.log('From Cache')
-    //   return JSON.parse(result);
-    // } else {
+    const result = await getRedisCacheAsync(JSON.stringify(params))
+    if (result) {
+      console.log('From Cache')
+      return JSON.parse(result);
+    } else {
       const response = await axios.get('/', { params })
       console.log('Not From Cache')
       client.setex(JSON.stringify(params), 60, JSON.stringify(response.data));
       return response.data;
-    // }
+    }
   } catch (err) {
     console.log(err.message)
   }

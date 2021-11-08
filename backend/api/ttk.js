@@ -4,7 +4,6 @@ const { API_KEY } = require('../constants');
 const { getCacheCustom, getCacheWithoutResponse } = require('../cache');
 
 const router = express.Router();
-axios.defaults.baseURL = 'https://api.bscscan.com/api';
 
 const contractaddress = '0x39703A67bAC0E39f9244d97f4c842D15Fbad9C1f';
 const walletAddresses = [

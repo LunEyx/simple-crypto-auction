@@ -87,6 +87,11 @@ const MergedChartForTTK = (props) => {
     return new Date(timeStamp);
   }
 
+  const roundDateToHour = (timeStamp) => {
+    timeStamp -= timeStamp % (6 * 60 * 60 * 1000);
+    return new Date(timeStamp);
+  }
+
   const data = [];
   let counter = 1;
   for (const walletAddress of Object.keys(rawData)) {
@@ -103,6 +108,29 @@ const MergedChartForTTK = (props) => {
     }
   }
 
+  const newData = {Sales: {}, Purchase: {}};
+  for (const walletAddress of Object.keys(rawData)) {
+    for (const row of rawData[walletAddress]) {
+      const timeStamp = roundDateToHour(parseInt(row.timeStamp + '000'));
+      const status = row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase';
+
+      if (!newData[status][timeStamp]) {
+        newData[status][timeStamp] = { count: 0, token: 0 };
+      }
+      newData[status][timeStamp].count += 1
+      newData[status][timeStamp].token += row.value / ETHER_UNIT;
+    }
+  }
+
+  const chartData = [];
+  for (const [timeStamp, row] of Object.entries(newData.Purchase)) {
+    chartData.push(['', new Date(timeStamp), row.count, 'Purchase', row.token]);
+  }
+  for (const [timeStamp, row] of Object.entries(newData.Sales)) {
+    chartData.push(['', new Date(timeStamp), row.count, 'Sales', row.token]);
+  }
+  console.log(chartData);
+
   return isLoading ? (
     <div>Retry...{retry}</div>
   ) : (
@@ -110,11 +138,13 @@ const MergedChartForTTK = (props) => {
       chartType='BubbleChart'
       loader={<div>Loading Chart...</div>}
       data={[
-        ['ID', 'Date', 'Transaction Counter', 'Status', 'No. of Token'],
-        ...data
+        ['ID', 'Date', 'No. of Transactions', 'Status', 'No. of Token'],
+        ...chartData
       ]}
       options={{
-        title: 'MergedChartForTTK'
+        title: 'MergedChartForTTK',
+        vAxis: { title: 'Price' },
+        hAxis: { title: 'Date' }
       }}
     />
   );
