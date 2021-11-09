@@ -3,7 +3,6 @@ import Chart from 'react-google-charts';
 import CommonAddressInput from '../../common/CommonAddressInput';
 import { getTtkTxList, getTtkHistoricalPrice, getUserAddress } from './api';
 import { ETHER_UNIT } from './constants';
-import { testData } from './testData';
 
 const MergedChartForTTK = (props) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,29 +11,26 @@ const MergedChartForTTK = (props) => {
   const [selectedUser, setSelectedUser] = useState('');
   const [userDropdownOptions, setUserDropdownOptions] = useState({});
 
-  useEffect(async () => {
-    try {
-      let response = await getUserAddress();
-      setUserDropdownOptions(response.options);
-      response = await getTtkHistoricalPrice();
-      setHistoricalPrice(response);
-      response = await getTtkTxList();
-      const rawData = {};
-      for (const [key, value] of Object.entries(response)) {
-        rawData[key.toLowerCase()] = value;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let response = await getUserAddress();
+        setUserDropdownOptions(response.options);
+        response = await getTtkHistoricalPrice();
+        setHistoricalPrice(response.data.quotes);
+        response = await getTtkTxList();
+        const rawData = {};
+        for (const [key, value] of Object.entries(response)) {
+          rawData[key.toLowerCase()] = value;
+        }
+        setRawData(rawData);
+        setIsLoading(false)
+      } catch (err) {
+        console.log(err.message)
       }
-      setRawData(rawData);
-      setIsLoading(false)
-    } catch (err) {
-      console.log(err.message)
     }
+    fetchData();
   }, [])
-
-  const roundDate = (timeStamp) => {
-    timeStamp -= timeStamp % (24 * 60 * 60 * 1000);//subtract amount of time since midnight
-    timeStamp += new Date().getTimezoneOffset() * 60 * 1000;//add on the timezone offset
-    return new Date(timeStamp);
-  }
 
   const roundDateToHour = (timeStamp) => {
     timeStamp -= timeStamp % (60 * 60 * 1000);
@@ -43,9 +39,9 @@ const MergedChartForTTK = (props) => {
 
   const ttkHistoricalPrice = {};
   for (const row of historicalPrice) {
-    const time = new Date((row.time - row.time % (30 * 60)) * 1000);
+    const time = roundDateToHour(new Date(row.timestamp).getTime());
     if (!ttkHistoricalPrice[time]) {
-      ttkHistoricalPrice[time] = { price: row.price, priceBTC: row.priceBTC };
+      ttkHistoricalPrice[time] = row.quote.USD.price
     }
   }
 
@@ -54,7 +50,7 @@ const MergedChartForTTK = (props) => {
     const walletAddress = selectedUser;
     for (const row of rawData[walletAddress]) {
       const timeStamp = roundDateToHour(parseInt(row.timeStamp + '000'));
-      const price = ttkHistoricalPrice[timeStamp] ? ttkHistoricalPrice[timeStamp].price : 0;
+      const price = ttkHistoricalPrice[timeStamp] || 0;
       const status = row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase';
 
       if (!newData[status][timeStamp]) {
@@ -66,7 +62,7 @@ const MergedChartForTTK = (props) => {
     for (const walletAddress of Object.keys(rawData)) {
       for (const row of rawData[walletAddress]) {
         const timeStamp = roundDateToHour(parseInt(row.timeStamp + '000'));
-        const price = ttkHistoricalPrice[timeStamp] ? ttkHistoricalPrice[timeStamp].price : 0;
+        const price = ttkHistoricalPrice[timeStamp] || 0;
         const status = row['from'].toLowerCase() === walletAddress.toLowerCase() ? 'Sales' : 'Purchase';
 
         if (!newData[status][timeStamp]) {
@@ -96,22 +92,6 @@ const MergedChartForTTK = (props) => {
   const changeSelectedUser = (value) => {
     setSelectedUser(value);
   }
-
-  /*
-  Start test data for coinmarketcap.com api for quote historical api
-  */
-
-  const testQuote = testData.data.quotes;
-  const outputData = {}
-  for (const row of testQuote) {
-    outputData[new Date(row.timestamp)] = { price: row.quote.USD.price, priceBTC: 0 };
-  }
-
-  console.log(outputData)
-
-  /*
-  End test data
-  */
 
   return isLoading ? (
     <div>Extracting Data...</div>

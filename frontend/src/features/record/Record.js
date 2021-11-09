@@ -9,7 +9,7 @@ import { CellWithCopy } from '../../common/CopyToClipboardButton';
 import { displayHash, downloadCSV } from '../../common/util';
 import AddressInput from '../../common/AddressInput';
 import CommonAddressInput from '../../common/CommonAddressInput';
-import { BSCSCAN_URL, walletAddresses } from './constants';
+import { BSCSCAN_URL } from './constants';
 import {
   getWalletAddressData, getContractAddressData,
   getAccountBalance, getTxList, getTokenTx, getTokenNftTx, getTokenBalance,
@@ -19,7 +19,6 @@ import {
 import {
   convertToTokenHolderListChartData, convertToTokenTxTransactionChartData, convertToTokenTxQuantityChartData
 } from './chartData';
-import ChartForTTK from './ChartForTTK';
 import './Record.css';
 import MergedChartForTTK from './MergedChartForTTK';
 
@@ -274,7 +273,6 @@ const Record = (props) => {
       <hr />
       <h1>Record</h1>
       <MergedChartForTTK />
-      {/* {walletAddresses.map((walletAddress) => <ChartForTTK key={walletAddress} walletAddress={walletAddress} />)} */}
       <h3>Select To Display</h3>
       {options.map((option) => (
         <button key={option.name} disabled={isLoading || currentOption === option.name} onClick={() => handleChangeDisplay(option)}>{option.name}</button>

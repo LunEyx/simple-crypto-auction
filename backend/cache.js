@@ -10,17 +10,17 @@ client.on('error', (err) => {
   console.log(err);
 });
 
-// const getCache = async (key) => {
-//   return await client.get(key);
-// };
+const getCache = async (key) => {
+  return await client.get(key);
+};
 
-// const setCache = async (key, seconds, value) => {
-//   await client.setEx(key, seconds, value);
-// }
+const setCache = async (key, seconds, value) => {
+  await client.setEx(key, seconds, value);
+}
 
 module.exports = { getCache, setCache };
 
-module.exports.getCache = async (res, params) => {
+module.exports.getCacheOld = async (res, params) => {
   try {
     const result = await client.get(JSON.stringify(params));
     if (result) {

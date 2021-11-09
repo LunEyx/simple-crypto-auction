@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { BSCSCAN_API_KEY } = require('../constants');
-const { getCache } = require('../cache');
+const { getCacheOld } = require('../cache');
 
 const router = express.Router();
 axios.defaults.baseURL = 'https://api.bscscan.com/api';
@@ -17,7 +17,7 @@ router.get('/balance', (req, res) => {
     address,
     tag
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get a list of 'Normal' Transactions By Address
@@ -34,7 +34,7 @@ router.get('/txlist', (req, res) => {
     offset,
     sort
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get a list of 'BEP-20 Token Transfer Events' by Address
@@ -52,7 +52,7 @@ router.get('/tokentx', (req, res) => {
     offset,
     sort
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get a list of 'BEP-721 Token Transfer Events' by Address
@@ -70,7 +70,7 @@ router.get('/tokennfttx', (req, res) => {
     offset,
     sort
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get BEP-20 Token Account Balance by ContractAddress
@@ -83,7 +83,7 @@ router.get('/tokenbalance', (req, res) => {
     address,
     contractaddress,
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get Address BEP20 Token Holding
@@ -97,7 +97,7 @@ router.get('/addresstokenbalance', (req, res) => {
     page,
     offset
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 // Get Address BEP721 Token Holding 
@@ -111,7 +111,7 @@ router.get('/addresstokennftbalance', (req, res) => {
     page,
     offset
   };
-  getCache(res, params);
+  getCacheOld(res, params);
 });
 
 module.exports = router;

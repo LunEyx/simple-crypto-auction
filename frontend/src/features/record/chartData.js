@@ -1,4 +1,3 @@
-import { current } from "@reduxjs/toolkit";
 import { displayHash } from "../../common/util";
 
 export const convertToTokenHolderListChartData = (data, params, addressDictionary) => {
