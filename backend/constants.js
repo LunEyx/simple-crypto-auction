@@ -5,6 +5,7 @@ module.exports.COIN_MARKET_CAP_API_KEY = '<ENTER API KEY>';
 
 module.exports.TTK_SYMBOL = 'TTK';
 module.exports.MAX_COUNT_HOURLY = 2160;
+module.exports.CACHE_EXPIRE_SECONDS = 60;
 
 // For reading addresses csv file
 module.exports.ASSETS_FOLDER = './assets';

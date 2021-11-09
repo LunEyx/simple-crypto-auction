@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { BSCSCAN_API_KEY } = require('../constants');
-const { getCacheOld } = require('../cache');
+const { responseByFetch, fetchFromBscSscan } = require('../common/fetchData');
 
 const router = express.Router();
 axios.defaults.baseURL = 'https://api.bscscan.com/api';
@@ -15,7 +15,7 @@ router.get('/tokensupply', (req, res) => {
     apikey: BSCSCAN_API_KEY,
     contractaddress
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 
@@ -28,7 +28,7 @@ router.get('/tokenCsupply', (req, res) => {
     apikey: BSCSCAN_API_KEY,
     contractaddress
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 module.exports = router;

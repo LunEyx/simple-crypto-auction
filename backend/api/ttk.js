@@ -51,19 +51,12 @@ router.get('/txlist', async (req, res) => {
           console.log('Not From Cache');
           while (retry < max_retry) {
             retry++;
-            try {
-              const response = await axios.get('/', { params: internalParams });
-              if (response.data.status === '1') {
-                await setCache(JSON.stringify(internalParams), 60, JSON.stringify(response.data.result));
-                data[address] = response.data.result;
-                retry = max_retry;
-              } else {
-                console.log(`Retry...${retry}`);
-                await new Promise((resolve) => setTimeout(() => {
-                  resolve()
-                }, 1000));
-              }
-            } catch (err) {
+            const response = await axios.get('/', { params: internalParams });
+            if (response.data.status === '1') {
+              await setCache(JSON.stringify(internalParams), 60, JSON.stringify(response.data.result));
+              data[address] = response.data.result;
+              retry = max_retry;
+            } else {
               console.log(`Retry...${retry}`);
               await new Promise((resolve) => setTimeout(() => {
                 resolve()

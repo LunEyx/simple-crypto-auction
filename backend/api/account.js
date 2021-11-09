@@ -1,14 +1,13 @@
 const express = require('express');
 const axios = require('axios');
 const { BSCSCAN_API_KEY } = require('../constants');
-const { getCacheOld } = require('../cache');
+const { fetchFromBscSscan, responseByFetch, fetchFromCoinMarketCap } = require('../common/fetchData');
 
 const router = express.Router();
 axios.defaults.baseURL = 'https://api.bscscan.com/api';
 
 // Get BNB Balance for a Single Address
 router.get('/balance', (req, res) => {
-  console.log(req);
   const { address, tag } = req.query;
   const params = {
     module: 'account',
@@ -17,7 +16,7 @@ router.get('/balance', (req, res) => {
     address,
     tag
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get a list of 'Normal' Transactions By Address
@@ -34,7 +33,7 @@ router.get('/txlist', (req, res) => {
     offset,
     sort
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get a list of 'BEP-20 Token Transfer Events' by Address
@@ -52,7 +51,7 @@ router.get('/tokentx', (req, res) => {
     offset,
     sort
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get a list of 'BEP-721 Token Transfer Events' by Address
@@ -70,7 +69,7 @@ router.get('/tokennfttx', (req, res) => {
     offset,
     sort
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get BEP-20 Token Account Balance by ContractAddress
@@ -83,7 +82,7 @@ router.get('/tokenbalance', (req, res) => {
     address,
     contractaddress,
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get Address BEP20 Token Holding
@@ -97,7 +96,7 @@ router.get('/addresstokenbalance', (req, res) => {
     page,
     offset
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 // Get Address BEP721 Token Holding 
@@ -111,7 +110,7 @@ router.get('/addresstokennftbalance', (req, res) => {
     page,
     offset
   };
-  getCacheOld(res, params);
+  responseByFetch(res, fetchFromBscSscan, params);
 });
 
 module.exports = router;
