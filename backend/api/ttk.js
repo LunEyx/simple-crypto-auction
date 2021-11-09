@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { API_KEY } = require('../constants');
+const { BSCSCAN_API_KEY } = require('../constants');
 const { getCacheCustom, getCacheWithoutResponse } = require('../cache');
 const { ttkHistoricalPrice } = require('../assets/TTK Historical Price');
 
@@ -108,7 +108,7 @@ router.get('/txlist', (req, res) => {
   const params = {
     module: 'ttk',
     action: 'txlist',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
   };
   getCacheCustom(res, params, async (client) => {
     const data = {};
@@ -116,7 +116,7 @@ router.get('/txlist', (req, res) => {
       const internalParams = {
         module: 'account',
         action: 'tokentx',
-        apikey: API_KEY,
+        apikey: BSCSCAN_API_KEY,
         address,
         contractaddress,
         startblock,

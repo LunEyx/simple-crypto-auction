@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { API_KEY } = require('../constants');
+const { BSCSCAN_API_KEY } = require('../constants');
 const { getCache } = require('../cache');
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.get('/gettxreceiptstatus', (req, res) => {
   const params = {
     module: 'transaction',
     action: 'gettxreceiptstatus',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     txhash
   };
   getCache(res, params);

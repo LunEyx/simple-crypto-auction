@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { API_KEY } = require('../constants');
+const { BSCSCAN_API_KEY } = require('../constants');
 const { getCache } = require('../cache');
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.get('/tokenholderlist', (req, res) => {
   const params = {
     module: 'token',
     action: 'tokenholderlist',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     contractaddress,
     page,
     offset
@@ -26,7 +26,7 @@ router.get('/tokeninfo', (req, res) => {
   const params = {
     module: 'token',
     action: 'tokeninfo',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     contractaddress,
   };
   getCache(res, params);

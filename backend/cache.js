@@ -4,56 +4,49 @@ const { REDIS_PORT } = require('./constants');
 
 axios.defaults.baseURL = 'https://api.bscscan.com/api';
 const client = redis.createClient(REDIS_PORT);
+client.connect();
 
 client.on('error', (err) => {
   console.log(err);
 });
 
+// const getCache = async (key) => {
+//   return await client.get(key);
+// };
 
-module.exports.getCache = (res, params) => {
+// const setCache = async (key, seconds, value) => {
+//   await client.setEx(key, seconds, value);
+// }
+
+module.exports = { getCache, setCache };
+
+module.exports.getCache = async (res, params) => {
   try {
-    client.get(JSON.stringify(params), async (err, result) => {
-      if (err) throw err;
-
-      if (result) {
-        console.log('From Cache');
-        res.json(JSON.parse(result));
-      } else {
-        console.log('Not From Cache');
-        axios.get('/', { params })
-          .then((response) => {
-            client.setex(JSON.stringify(params), 60, JSON.stringify(response.data));
-            res.json(response.data);
-          });
-      }
-    })
+    const result = await client.get(JSON.stringify(params));
+    if (result) {
+      console.log('From Cache');
+      res.json(JSON.parse(result));
+    } else {
+      console.log('Not From Cache');
+      const response = await axios.get('/', { params });
+      await client.setEx(JSON.stringify(params), 60, JSON.stringify(response.data));
+      res.json(response.data);
+    }
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 }
 
-const getRedisCacheAsync = (key) => {
-  return new Promise((resolve, reject) => {
-    client.get(key, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data);
-      }
-    })
-  });
-}
-
 module.exports.getCacheWithoutResponse = async (params) => {
   try {
-    const result = await getRedisCacheAsync(JSON.stringify(params))
+    const result = await client.get(JSON.stringify(params))
     if (result) {
       console.log('From Cache')
       return JSON.parse(result);
     } else {
       const response = await axios.get('/', { params })
       console.log('Not From Cache')
-      client.setex(JSON.stringify(params), 60, JSON.stringify(response.data));
+      client.setEx(JSON.stringify(params), 60, JSON.stringify(response.data));
       return response.data;
     }
   } catch (err) {
@@ -61,19 +54,16 @@ module.exports.getCacheWithoutResponse = async (params) => {
   }
 }
 
-module.exports.getCacheCustom = (res, params, callback) => {
+module.exports.getCacheCustom = async (res, params, callback) => {
   try {
-    client.get(JSON.stringify(params), async (err, result) => {
-      if (err) throw err;
-
-      if (result) {
-        console.log('From Cache');
-        res.json(JSON.parse(result));
-      } else {
-        console.log('Not From Cache');
-        callback(client);
-      }
-    })
+    const result = await client.get(JSON.stringify(params))
+    if (result) {
+      console.log('From Cache');
+      res.json(JSON.parse(result));
+    } else {
+      console.log('Not From Cache');
+      callback(client);
+    }
   } catch (err) {
     res.status(500).send({ message: err.message });
   }

@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { API_KEY } = require('../constants');
+const { BSCSCAN_API_KEY } = require('../constants');
 const { getCache } = require('../cache');
 
 const router = express.Router();
@@ -8,11 +8,12 @@ axios.defaults.baseURL = 'https://api.bscscan.com/api';
 
 // Get BNB Balance for a Single Address
 router.get('/balance', (req, res) => {
+  console.log(req);
   const { address, tag } = req.query;
   const params = {
     module: 'account',
     action: 'balance',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     tag
   };
@@ -25,7 +26,7 @@ router.get('/txlist', (req, res) => {
   const params = {
     module: 'account',
     action: 'txlist',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     startblock,
     endblock,
@@ -42,7 +43,7 @@ router.get('/tokentx', (req, res) => {
   const params = {
     module: 'account',
     action: 'tokentx',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     contractaddress,
     startblock,
@@ -60,7 +61,7 @@ router.get('/tokennfttx', (req, res) => {
   const params = {
     module: 'account',
     action: 'tokennfttx',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     contractaddress,
     startblock,
@@ -78,7 +79,7 @@ router.get('/tokenbalance', (req, res) => {
   const params = {
     module: 'account',
     action: 'tokenbalance',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     contractaddress,
   };
@@ -91,7 +92,7 @@ router.get('/addresstokenbalance', (req, res) => {
   const params = {
     module: 'account',
     action: 'addresstokenbalance',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     page,
     offset
@@ -105,7 +106,7 @@ router.get('/addresstokennftbalance', (req, res) => {
   const params = {
     module: 'account',
     action: 'addresstokennftbalance',
-    apikey: API_KEY,
+    apikey: BSCSCAN_API_KEY,
     address,
     page,
     offset
